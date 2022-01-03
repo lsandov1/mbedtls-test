@@ -21,6 +21,9 @@ import java.security.MessageDigest
 
 import groovy.transform.Field
 
+/* Indicates if CI is running on Open CI (hosted on https://ci.trustedfirmware.org/) */
+@Field is_open_ci_env = env.JENKINS_URL ==~ /\S+(trustedfirmware)\S+/
+
 /*
  * This controls the timeout each job has. It does not count the time spent in
  * waiting queues and setting up the environment.
@@ -28,7 +31,7 @@ import groovy.transform.Field
  * Raas has its own resource queue with the timeout of 1000s, we need to take
  * it into account for the on-target test jobs.
  */
-@Field perJobTimeout = [time: 60, raasOffset: 17, unit: 'MINUTES']
+@Field perJobTimeout = is_open_ci_env ? [time: 180, raasOffset: 17, unit: 'MINUTES'] : [time: 60, raasOffset: 17, unit: 'MINUTES']
 
 @Field compiler_paths = [
     'gcc' : 'gcc',
@@ -37,8 +40,8 @@ import groovy.transform.Field
     'cc' : 'cc'
 ]
 
-@Field docker_repo_name = 'jenkins-mbedtls'
-@Field docker_ecr = "666618195821.dkr.ecr.eu-west-1.amazonaws.com"
+@Field docker_repo_name = is_open_ci_env ? 'ci-amd64-mbed-tls-ubuntu' : 'jenkins-mbedtls'
+@Field docker_ecr = is_open_ci_env ? "trustedfirmware" : "666618195821.dkr.ecr.eu-west-1.amazonaws.com"
 @Field docker_repo = "$docker_ecr/$docker_repo_name"
 
 @Field linux_platforms = ["ubuntu-16.04", "ubuntu-18.04"]
@@ -74,7 +77,7 @@ import groovy.transform.Field
 
 /* Maps platform names to the tag of the docker image used to test that platform.
  * Populated by init_docker_images() / gen_jobs.gen_dockerfile_builder_job(platform). */
-@Field static docker_tags = [:]
+@Field docker_tags = is_open_ci_env ? [('ubuntu-16.04'):'xenial', ('ubuntu-18.04'):'bionic'] : [:]
 
 /* Compute the git object ID of the Dockerfile.
 * Equivalent to the `git hash-object <file>` command. */
@@ -109,7 +112,12 @@ def get_docker_image(platform) {
     def docker_image = get_docker_tag(platform)
     for (int attempt = 1; attempt <= 3; attempt++) {
         try {
-            sh """\
+            if (is_open_ci_env)
+                sh """\
+docker pull $docker_repo:$docker_image
+"""
+            else
+                sh """\
 aws ecr get-login-password | docker login --username AWS --password-stdin $docker_ecr
 docker pull $docker_repo:$docker_image
 """

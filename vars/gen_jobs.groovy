@@ -163,6 +163,7 @@ def gen_all_sh_jobs(platform, component, label_prefix='') {
     def use_docker = platform_has_docker(platform)
     def extra_setup_code = ''
     def node_label = node_label_for_platform(platform)
+    def armlmd_license_file = common.is_open_ci_env ? "27000@flexnet.trustedfirmware.org" : "7010@10.6.26.52:7010@10.6.26.53:7010@10.6.26.54:7010@10.6.26.56"
 
     if (platform_lacks_tls_tools(platform)) {
         /* The check_tools function in all.sh insists on the existence of the
@@ -229,7 +230,7 @@ scripts/min_requirements.py --user
 #!/bin/sh
 set -eux
 ulimit -f 20971520
-export ARMLMD_LICENSE_FILE="7010@10.6.26.52:7010@10.6.26.53:7010@10.6.26.54:7010@10.6.26.56"
+export ARMLMD_LICENSE_FILE="${armlmd_license_file}"
 export MBEDTLS_TEST_OUTCOME_FILE='${job_name}-outcome.csv'
 ${extra_setup_code}
 ./tests/scripts/all.sh --seed 4 --keep-going $component
@@ -339,6 +340,7 @@ def gen_windows_jobs(label_prefix='') {
 def gen_abi_api_checking_job(platform) {
     def jobs = [:]
     def job_name = "ABI-API-checking"
+    def credentials_id = common.is_open_ci_env ? "mbedtls-github-ssh" : "742b7080-e1cc-41c6-bf55-efb72013bc28"
 
     jobs[job_name] = {
         node('container-host') {
@@ -349,7 +351,7 @@ def gen_abi_api_checking_job(platform) {
                     checkout_repo.checkout_repo()
                     /* The credentials here are the SSH credentials for accessing the repositories.
                        They are defined at {JENKINS_URL}/credentials */
-                    withCredentials([sshUserPrivateKey(credentialsId: "742b7080-e1cc-41c6-bf55-efb72013bc28", keyFileVariable: 'keyfile')]) {
+                    withCredentials([sshUserPrivateKey(credentialsId: credentials_id, keyFileVariable: 'keyfile')]) {
                         sh "GIT_SSH_COMMAND=\"ssh -i ${keyfile}\" git fetch origin ${CHANGE_TARGET}"
                     }
                     writeFile file: 'steps.sh', text: """\
