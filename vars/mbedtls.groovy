@@ -96,7 +96,6 @@ def run_pr_job(is_production=true) {
                                    'In progress'
         common.maybe_notify_github "Result analysis", 'PENDING',
                                    'In progress'
-
         common.init_docker_images()
 
         stage('pre-test-checks') {
