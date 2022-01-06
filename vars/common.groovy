@@ -139,6 +139,7 @@ docker run -u \$(id -u):\$(id -g) --rm --entrypoint $entrypoint \
 
 /* Get components of all.sh for a list of platforms*/
 def get_branch_information() {
+    println 'container-host'
     node('container-host') {
         dir('src') {
             deleteDir()

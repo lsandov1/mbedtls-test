@@ -58,6 +58,7 @@ def gen_docker_jobs_foreach(label, platforms, compilers, script) {
             def job_name = "${label}-${compiler}-${platform}"
             def shell_script = sprintf(script, common.compiler_paths[compiler])
             jobs[job_name] = {
+                println 'container-host'
                 node('container-host') {
                     try {
                         deleteDir()
@@ -163,6 +164,7 @@ def gen_all_sh_jobs(platform, component, label_prefix='') {
     def use_docker = platform_has_docker(platform)
     def extra_setup_code = ''
     def node_label = node_label_for_platform(platform)
+    println node_label
     def armlmd_license_file = common.is_open_ci_env ? "27000@flexnet.trustedfirmware.org" : "7010@10.6.26.52:7010@10.6.26.53:7010@10.6.26.54:7010@10.6.26.56"
 
     if (platform_lacks_tls_tools(platform)) {
@@ -343,6 +345,7 @@ def gen_abi_api_checking_job(platform) {
     def credentials_id = common.is_open_ci_env ? "mbedtls-github-ssh" : "742b7080-e1cc-41c6-bf55-efb72013bc28"
 
     jobs[job_name] = {
+        println 'container-host'
         node('container-host') {
             try {
                 deleteDir()
@@ -390,6 +393,7 @@ def gen_code_coverage_job(platform) {
     def job_name = 'code-coverage'
 
     jobs[job_name] = {
+        println 'container-host'
         node('container-host') {
             try {
                 deleteDir()
